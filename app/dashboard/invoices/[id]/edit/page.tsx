@@ -2,10 +2,24 @@ import Form from "@/app/ui/invoices/edit-form";
 import Breadcrumbs from "@/app/ui/invoices/breadcrumbs";
 import { fetchCustomers, fetchInvoiceById } from "@/app/lib/data";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
-export default async function Page(props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
-  const id = params.id;
+export default function Page(props: { params: Promise<{ id: string }> }) {
+  return (
+    <main>
+      <Suspense>
+        <EditInvoiceForm params={props.params} />
+      </Suspense>
+    </main>
+  );
+}
+
+async function EditInvoiceForm({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
 
   const [invoice, customers] = await Promise.all([
     fetchInvoiceById(id),
@@ -17,7 +31,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   }
 
   return (
-    <main>
+    <>
       <Breadcrumbs
         breadcrumbs={[
           { label: "Invoices", href: "/dashboard/invoices" },
@@ -29,6 +43,6 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
         ]}
       />
       <Form invoice={invoice} customers={customers} />
-    </main>
+    </>
   );
 }
