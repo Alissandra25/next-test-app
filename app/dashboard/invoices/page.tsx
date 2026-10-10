@@ -11,16 +11,12 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Invoices",
 };
-export default async function Page(props: {
-  searchParams?: Promise<{
-    query?: string;
-    page?: string;
-  }>;
-}) {
-  const searchParams = await props.searchParams;
-  const query = searchParams?.query || "";
-  const currentPage = Number(searchParams?.page) || 1;
-  const totalPages = await fetchInvoicesPages(query);
+type InvoicesSearchParams = Promise<{
+  query?: string;
+  page?: string;
+}>;
+
+export default function Page(props: { searchParams?: InvoicesSearchParams }) {
   return (
     <div className="w-full">
       <div className="flex w-full items-center justify-between">
@@ -32,14 +28,36 @@ export default async function Page(props: {
         </Suspense>
         <CreateInvoice />
       </div>
-      <Suspense key={query + currentPage} fallback={<InvoicesTableSkeleton />}>
-        <Table query={query} currentPage={currentPage} />
+      <Suspense fallback={<InvoicesTableSkeleton />}>
+        <InvoicesTable searchParams={props.searchParams} />
       </Suspense>
       <div className="mt-5 flex w-full justify-center">
-        <Suspense key={totalPages}>
-          <Pagination totalPages={totalPages} />
+        <Suspense>
+          <InvoicesPagination searchParams={props.searchParams} />
         </Suspense>
       </div>
     </div>
   );
+}
+
+async function InvoicesTable({
+  searchParams,
+}: {
+  searchParams?: InvoicesSearchParams;
+}) {
+  const params = await searchParams;
+  const query = params?.query || "";
+  const currentPage = Number(params?.page) || 1;
+  return <Table query={query} currentPage={currentPage} />;
+}
+
+async function InvoicesPagination({
+  searchParams,
+}: {
+  searchParams?: InvoicesSearchParams;
+}) {
+  const params = await searchParams;
+  const query = params?.query || "";
+  const totalPages = await fetchInvoicesPages(query);
+  return <Pagination totalPages={totalPages} />;
 }
